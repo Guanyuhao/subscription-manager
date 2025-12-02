@@ -5276,6 +5276,12 @@ async function sendNotificationToAllChannels(title, commonContent, config, logPr
         return;
     }
 
+    // Server 酱优先级最高，最先发送
+    if (config.ENABLED_NOTIFIERS.includes('serverchan')) {
+        const serverchanContent = commonContent.replace(/(\**|\*|##|#|`)/g, '');
+        const success = await sendServerChanNotification(title, serverchanContent, config);
+        console.log(`${logPrefix} 发送Server酱通知 ${success ? '成功' : '失败'}`);
+    }
     if (config.ENABLED_NOTIFIERS.includes('notifyx')) {
         const notifyxContent = `## ${title}\n\n${commonContent}`;
         const success = await sendNotifyXNotification(title, notifyxContent, `订阅提醒`, config);
@@ -5310,11 +5316,6 @@ async function sendNotificationToAllChannels(title, commonContent, config, logPr
         const barkContent = commonContent.replace(/(\**|\*|##|#|`)/g, '');
         const success = await sendBarkNotification(title, barkContent, config);
         console.log(`${logPrefix} 发送Bark通知 ${success ? '成功' : '失败'}`);
-    }
-    if (config.ENABLED_NOTIFIERS.includes('serverchan')) {
-        const serverchanContent = commonContent.replace(/(\**|\*|##|#|`)/g, '');
-        const success = await sendServerChanNotification(title, serverchanContent, config);
-        console.log(`${logPrefix} 发送Server酱通知 ${success ? '成功' : '失败'}`);
     }
 }
 
