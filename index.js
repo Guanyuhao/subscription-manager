@@ -3283,6 +3283,10 @@ const configPage = `
                 <input type="checkbox" name="enabledNotifiers" value="bark" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                 <span class="ml-2 text-sm text-gray-700">Bark</span>
               </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="enabledNotifiers" value="serverchan" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                <span class="ml-2 text-sm text-gray-700">Server 酱</span>
+              </label>
             </div>
             <div class="mt-2 flex flex-wrap gap-4">
               <a href="https://www.notifyx.cn/" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">
@@ -3299,6 +3303,9 @@ const configPage = `
               </a>
               <a href="https://apps.apple.com/cn/app/bark-customed-notifications/id1403753865" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">
                 <i class="fas fa-external-link-alt ml-1"></i> Bark iOS应用
+              </a>
+              <a href="https://sct.ftqq.com/" target="_blank" class="text-indigo-600 hover:text-indigo-800 text-sm">
+                <i class="fas fa-external-link-alt ml-1"></i> Server 酱官网
               </a>
             </div>
           </div>
@@ -3477,6 +3484,20 @@ const configPage = `
               </button>
             </div>
           </div>
+
+          <div id="serverchanConfig" class="config-section">
+            <h4 class="text-md font-medium text-gray-900 mb-3">Server 酱 配置</h4>
+            <div class="mb-4">
+              <label for="serverchanSendkey" class="block text-sm font-medium text-gray-700">SendKey</label>
+              <input type="text" id="serverchanSendkey" placeholder="从 Server 酱官网获取的 SendKey" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <p class="mt-1 text-sm text-gray-500">从 <a href="https://sct.ftqq.com/" target="_blank" class="text-indigo-600 hover:text-indigo-800">Server 酱官网</a> 获取的 SendKey</p>
+            </div>
+            <div class="flex justify-end">
+              <button type="button" id="testServerChanBtn" class="btn-secondary text-white px-4 py-2 rounded-md text-sm font-medium">
+                <i class="fas fa-paper-plane mr-2"></i>测试 Server 酱通知
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="flex justify-end">
@@ -3536,6 +3557,7 @@ const configPage = `
         document.getElementById('barkServer').value = config.BARK_SERVER || 'https://api.day.app';
         document.getElementById('barkDeviceKey').value = config.BARK_DEVICE_KEY || '';
         document.getElementById('barkIsArchive').checked = config.BARK_IS_ARCHIVE === 'true';
+        document.getElementById('serverchanSendkey').value = config.SERVERCHAN_SENDKEY || '';
         document.getElementById('thirdPartyToken').value = config.THIRD_PARTY_API_TOKEN || '';
         const notificationHoursInput = document.getElementById('notificationHours');
         if (notificationHoursInput) {
@@ -3610,9 +3632,10 @@ const configPage = `
       const wechatbotConfig = document.getElementById('wechatbotConfig');
       const emailConfig = document.getElementById('emailConfig');
       const barkConfig = document.getElementById('barkConfig');
+      const serverchanConfig = document.getElementById('serverchanConfig');
 
       // 重置所有配置区域
-      [telegramConfig, notifyxConfig, webhookConfig, wechatbotConfig, emailConfig, barkConfig].forEach(config => {
+      [telegramConfig, notifyxConfig, webhookConfig, wechatbotConfig, emailConfig, barkConfig, serverchanConfig].forEach(config => {
         config.classList.remove('active', 'inactive');
         config.classList.add('inactive');
       });
@@ -3637,6 +3660,9 @@ const configPage = `
         } else if (type === 'bark') {
           barkConfig.classList.remove('inactive');
           barkConfig.classList.add('active');
+        } else if (type === 'serverchan') {
+          serverchanConfig.classList.remove('inactive');
+          serverchanConfig.classList.add('active');
         }
       });
     }
@@ -3681,6 +3707,7 @@ const configPage = `
         BARK_SERVER: document.getElementById('barkServer').value.trim() || 'https://api.day.app',
         BARK_DEVICE_KEY: document.getElementById('barkDeviceKey').value.trim(),
         BARK_IS_ARCHIVE: document.getElementById('barkIsArchive').checked.toString(),
+        SERVERCHAN_SENDKEY: document.getElementById('serverchanSendkey').value.trim(),
         ENABLED_NOTIFIERS: enabledNotifiers,
         TIMEZONE: document.getElementById('timezone').value.trim(),
         THIRD_PARTY_API_TOKEN: document.getElementById('thirdPartyToken').value.trim(),
@@ -3748,14 +3775,16 @@ const configPage = `
                       type === 'notifyx' ? 'testNotifyXBtn' :
                       type === 'wechatbot' ? 'testWechatBotBtn' :
                       type === 'email' ? 'testEmailBtn' :
-                      type === 'bark' ? 'testBarkBtn' : 'testWebhookBtn';
+                      type === 'bark' ? 'testBarkBtn' :
+                      type === 'serverchan' ? 'testServerChanBtn' : 'testWebhookBtn';
       const button = document.getElementById(buttonId);
       const originalContent = button.innerHTML;
       const serviceName = type === 'telegram' ? 'Telegram' :
                           type === 'notifyx' ? 'NotifyX' :
                           type === 'wechatbot' ? '企业微信机器人' :
                           type === 'email' ? '邮件通知' :
-                          type === 'bark' ? 'Bark' : 'Webhook 通知';
+                          type === 'bark' ? 'Bark' :
+                          type === 'serverchan' ? 'Server 酱' : 'Webhook 通知';
 
       button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>测试中...';
       button.disabled = true;
@@ -3827,6 +3856,15 @@ const configPage = `
           button.disabled = false;
           return;
         }
+      } else if (type === 'serverchan') {
+        config.SERVERCHAN_SENDKEY = document.getElementById('serverchanSendkey').value.trim();
+
+        if (!config.SERVERCHAN_SENDKEY) {
+          showToast('请先填写 Server 酱 SendKey', 'warning');
+          button.innerHTML = originalContent;
+          button.disabled = false;
+          return;
+        }
       }
 
       try {
@@ -3874,6 +3912,10 @@ const configPage = `
 
     document.getElementById('testBarkBtn').addEventListener('click', () => {
       testNotification('bark');
+    });
+
+    document.getElementById('testServerChanBtn').addEventListener('click', () => {
+      testNotification('serverchan');
     });
 
     document.getElementById('generateThirdPartyToken').addEventListener('click', () => {
@@ -4150,6 +4192,7 @@ const api = {
             WEBHOOK_TEMPLATE: newConfig.WEBHOOK_TEMPLATE || '',
             SHOW_LUNAR: newConfig.SHOW_LUNAR === true,
             WECHATBOT_WEBHOOK: newConfig.WECHATBOT_WEBHOOK || '',
+            SERVERCHAN_SENDKEY: newConfig.SERVERCHAN_SENDKEY || '',
             WECHATBOT_MSG_TYPE: newConfig.WECHATBOT_MSG_TYPE || 'text',
             WECHATBOT_AT_MOBILES: newConfig.WECHATBOT_AT_MOBILES || '',
             WECHATBOT_AT_ALL: newConfig.WECHATBOT_AT_ALL || 'false',
@@ -4160,6 +4203,7 @@ const api = {
             BARK_DEVICE_KEY: newConfig.BARK_DEVICE_KEY || '',
             BARK_SERVER: newConfig.BARK_SERVER || 'https://api.day.app',
             BARK_IS_ARCHIVE: newConfig.BARK_IS_ARCHIVE || 'false',
+            SERVERCHAN_SENDKEY: newConfig.SERVERCHAN_SENDKEY || '',
             ENABLED_NOTIFIERS: newConfig.ENABLED_NOTIFIERS || ['notifyx'],
             TIMEZONE: newConfig.TIMEZONE || config.TIMEZONE || 'UTC',
             THIRD_PARTY_API_TOKEN: newConfig.THIRD_PARTY_API_TOKEN || ''
@@ -4297,6 +4341,17 @@ const api = {
 
           success = await sendBarkNotification(title, content, testConfig);
           message = success ? 'Bark通知发送成功' : 'Bark通知发送失败，请检查配置';
+        } else if (body.type === 'serverchan') {
+          const testConfig = {
+            ...config,
+            SERVERCHAN_SENDKEY: body.SERVERCHAN_SENDKEY
+          };
+
+          const title = '测试通知';
+          const content = '这是一条测试通知，用于验证Server酱通知功能是否正常工作。\n\n发送时间: ' + formatBeijingTime();
+
+          success = await sendServerChanNotification(title, content, testConfig);
+          message = success ? 'Server酱通知发送成功' : 'Server酱通知发送失败，请检查配置';
         }
 
         return new Response(
@@ -4533,6 +4588,7 @@ async function getConfig(env) {
       BARK_DEVICE_KEY: config.BARK_DEVICE_KEY || '',
       BARK_SERVER: config.BARK_SERVER || 'https://api.day.app',
       BARK_IS_ARCHIVE: config.BARK_IS_ARCHIVE || 'false',
+      SERVERCHAN_SENDKEY: config.SERVERCHAN_SENDKEY || '',
       ENABLED_NOTIFIERS: config.ENABLED_NOTIFIERS || ['notifyx'],
       TIMEZONE: config.TIMEZONE || 'UTC', // 新增时区字段
       NOTIFICATION_HOURS: Array.isArray(config.NOTIFICATION_HOURS) ? config.NOTIFICATION_HOURS : [],
@@ -4565,6 +4621,10 @@ async function getConfig(env) {
       EMAIL_FROM: '',
       EMAIL_FROM_NAME: '',
       EMAIL_TO: '',
+      BARK_DEVICE_KEY: '',
+      BARK_SERVER: 'https://api.day.app',
+      BARK_IS_ARCHIVE: 'false',
+      SERVERCHAN_SENDKEY: '',
       ENABLED_NOTIFIERS: ['notifyx'],
       NOTIFICATION_HOURS: [],
       TIMEZONE: 'UTC', // 新增时区字段
@@ -5251,6 +5311,11 @@ async function sendNotificationToAllChannels(title, commonContent, config, logPr
         const success = await sendBarkNotification(title, barkContent, config);
         console.log(`${logPrefix} 发送Bark通知 ${success ? '成功' : '失败'}`);
     }
+    if (config.ENABLED_NOTIFIERS.includes('serverchan')) {
+        const serverchanContent = commonContent.replace(/(\**|\*|##|#|`)/g, '');
+        const success = await sendServerChanNotification(title, serverchanContent, config);
+        console.log(`${logPrefix} 发送Server酱通知 ${success ? '成功' : '失败'}`);
+    }
 }
 
 async function sendTelegramNotification(message, config) {
@@ -5348,6 +5413,40 @@ async function sendBarkNotification(title, content, config) {
     return result.code === 200;
   } catch (error) {
     console.error('[Bark] 发送通知失败:', error);
+    return false;
+  }
+}
+
+async function sendServerChanNotification(title, content, config) {
+  try {
+    if (!config.SERVERCHAN_SENDKEY) {
+      console.error('[Server酱] 通知未配置，缺少SendKey');
+      return false;
+    }
+
+    console.log('[Server酱] 开始发送通知');
+
+    const url = `https://sctapi.ftqq.com/${config.SERVERCHAN_SENDKEY}.send`;
+    const payload = {
+      title: title,
+      desp: content
+    };
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    console.log('[Server酱] 发送结果:', result);
+    
+    // Server酱 API返回code为0表示成功
+    return result.code === 0;
+  } catch (error) {
+    console.error('[Server酱] 发送通知失败:', error);
     return false;
   }
 }
